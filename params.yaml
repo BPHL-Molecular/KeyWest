@@ -1,0 +1,18 @@
+# Input/Output paths
+input_dir: "/blue/bphl-florida/yhwinnie/test/keywest-nf/fastqs"
+reference: "/blue/bphl-florida/yhwinnie/test/keywest-nf/resources/reference/GCF_000069185.1_ASM6918v1_genomic.fna.gz"
+output: "/blue/bphl-florida/yhwinnie/test/keywest-nf/output"
+
+# Kraken2 database path
+kraken2_db: "/orange/bphl-florida/databases/kraken_databases/minikraken2_v2_8GB_201904_UPDATE"
+
+# NTM-profiler database path
+NTM_profiler_db: "/blue/bphl-florida/yhwinnie/test/keywest-nf/resources/NTM-profiler"
+
+# HMM database path (uncomment and update when ready)
+# hmm_database: "/path/to/your/hmm/database.hmm"
+
+# Quality control thresholds (uncomment when needed)
+# qc_thresholds:
+#   min_coverage: 90  # Minimum coverage percentage
+#   min_depth: 15     # Minimum depth of coverage (x)
