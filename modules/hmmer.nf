@@ -1,34 +1,54 @@
-// modules/trun_label.nf
-process trun_label {
-    publishDir "${params.output}/${prefix}/trun_label", mode: 'copy'
+process hmmer {
+    publishDir "${params.output}/${prefix}/hmmer", mode: 'copy'
     
     input:
-    tuple path(prokka_faa), val(prefix)
+    tuple path(assembly), val(prefix)
     
     output:
-    tuple path("${prefix}_trun_label_results.txt"), val(prefix), emit: results
-    tuple path("${prefix}_hmmer_output.txt"), val(prefix), emit: hmmer_output
+    tuple path("${prefix}_hit_card_blast.txt"), val(prefix), emit: summary
+    
+    when:
+    task.ext.when == null || task.ext.when
     
     script:
-    def trun_label_script = params.trun_label_script ?: "trun_label.py"
     """
-    # Load required modules
-    module load hmmer
-    module load python
+    # Run nhmmer search
+    nhmmer \\
+        --tblout ${prefix}_hmmer_blast.tblout \\
+        -A ${prefix}_hmmer_blast.stockholm \\
+        ${params.erm41} \\
+        $assembly
+    # Check if hits were found
+    if grep -q "^[^#]" ${prefix}_hmmer_blast.tblout; then
+        echo "Hits found, extracting sequences and running BLAST..."
+        
+        # Extract hit sequences from Stockholm alignment
+        esl-reformat \\
+            -o ${prefix}_hit_sequence.fasta \\
+            fasta \\
+            ${prefix}_hmmer_blast.stockholm
+        
+        # Run BLASTX against CARD database
+        if [ -f "${prefix}_hit_sequence.fasta" ] && [ -s "${prefix}_hit_sequence.fasta" ]; then
+            blastx \\
+                -query ${prefix}_hit_sequence.fasta \\
+                -db ${params.card_database} \\
+                -outfmt 6 \\
+                -max_target_seqs 10 \\
+                -evalue 1e-5 \\
+                > ${prefix}_hit_card_blast.txt
+        else
+            echo "No sequences extracted from Stockholm file"
+            touch ${prefix}_hit_card_blast.txt
+        fi
+    else
+        echo "No hits found in nhmmer search"
+        touch ${prefix}_hit_card_blast.txt
+    fi
+    """
     
-    # Run HMMER search
-    hmmsearch \\
-        --tblout ${prefix}_hmmer_output.txt \\
-        --domtblout ${prefix}_hmmer_dom.txt \\
-        --cpu ${task.cpus} \\
-        ${params.hmm_database} \\
-        ${prokka_faa} > ${prefix}_hmmer_search.out
-    
-    # Run Python script for trun-label analysis
-    python ${trun_label_script} \\
-        --hmmer_output ${prefix}_hmmer_output.txt \\
-        --input_faa ${prokka_faa} \\
-        --prefix ${prefix} \\
-        --output ${prefix}_trun_label_results.txt
+    stub:
+    """
+    touch ${prefix}_hit_card_blast.txt
     """
 }

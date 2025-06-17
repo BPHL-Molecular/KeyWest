@@ -5,10 +5,10 @@ process stats {
     tuple path(bam_file), val(prefix)
     
     output:
-    path "${prefix}_stats.txt"
-    path "${prefix}_flagstat.txt"
-    path "${prefix}_coverage.txt"
-    path "${prefix}_depth.txt"
+    tuple path("${prefix}_stats.txt"), val(prefix), emit: stats
+    tuple path("${prefix}_flagstat.txt"), val(prefix), emit: flagstat
+    tuple path("${prefix}_coverage.txt"), val(prefix), emit: coverage
+    tuple path("${prefix}_depth.txt"), val(prefix), emit: depth
     
     script:
     """

@@ -1,9 +1,9 @@
-# Keywest - MABSC Identification and Resistance Prediction Pipeline
+# KeyWest - MABSC Identification and Resistance Prediction Pipeline
 
 This Nextflow pipeline identifies *Mycobacterium abscessus complex* (MABSC), predicts drug resistance, performs species identification, and assembles genomes from Illumina paired-end reads. It uses Docker/Singularity containers and generates comprehensive summary results with Erm(41) resistance gene detection.
 
 ## Requirements
-- Nextflow =23.04.0
+- Nextflow 23.04.0+
 - Singularity 
 - Conda 
 
@@ -111,7 +111,7 @@ output/
 - **Erm(41) sequences**: Query genes for resistance detection
 - **CARD database**: Comprehensive Antibiotic Resistance Database
 - **Kraken2 database**: Taxonomic classification
-- **NTM-Profiler database**: Mycobacterial species identification
+- **NTM-Profiler database**: Mycobacterial species identification. (The NTM-Profiler database for BPHL use by HiperGator has been modified by author.)
 
 ### Database Setup 
 (For Non-HiPerGator Users)
@@ -134,6 +134,7 @@ git clone https://github.com/jodyphelan/NTM-Profiler.git
 ## Troubleshooting
 
 (For Non-HiPerGator Users)
+
 Please install the following modules manually:
 
 **HMMER**: https://github.com/EddyRivasLab/hmmer/tree/master
