@@ -3,11 +3,11 @@ nextflow.enable.dsl=2
 
 // Include module definitions
 include { fastp } from './modules/fastp'
-include { ntm_profiler } from './modules/ntm_profiler'
 include { kraken2 } from './modules/kraken2'
 include { bwa } from './modules/bwa'
 include { samtools } from './modules/samtools'
 include { unicycler } from './modules/unicycler'
+include { ntm_profiler } from './modules/ntm_profiler'
 include { hmmer } from './modules/hmmer'
 include { stats } from './modules/stats'
 include { summary } from './modules/summary'
@@ -29,6 +29,9 @@ if (!params.card_database) {
 if (!params.erm41) {
     error "Missing required parameter: --erm41"
 }
+if (!params.NTM_profiler_db) {
+    error "Missing required parameter: --NTM_profiler_db"
+}
 if (!file(params.input_dir).exists()) {
     error "Input directory does not exist: ${params.input_dir}"
 }
@@ -37,6 +40,9 @@ if (!file(params.reference).exists()) {
 }
 if (!file(params.erm41).exists()) {
     error "ERM41 query file does not exist: ${params.erm41}"
+}
+if (!file(params.NTM_profiler_db).exists()) {
+    error "NTM-Profiler database directory does not exist: ${params.NTM_profiler_db}"
 }
 
 workflow {
@@ -55,25 +61,26 @@ workflow {
     trimmed_fastqs = fastp_out.reads
     fastp_reports = fastp_out.reports
     
-    // Step 2: Run NTM-Profiler on trimmed reads
-    ntm_profiler_out = ntm_profiler(trimmed_fastqs)
-    ntm_reports = ntm_profiler_out.report
-    ntm_sub_species = ntm_profiler_out.sub_species
-    
-    // Step 3: Run Kraken2 for taxonomic classification (on trimmed reads)
+    // Step 2: Run Kraken2 for taxonomic classification (on trimmed reads)
     kraken2_out = kraken2(trimmed_fastqs)
     kraken2_reports = kraken2_out.report
     
-    // Step 4: Run BWA on trimmed reads
+    // Step 3: Run BWA on trimmed reads
     sam_files = bwa(trimmed_fastqs)
     
-    // Step 5: Run Samtools (convert SAM to BAM)
+    // Step 4: Run Samtools (convert SAM to BAM)
     samtools_out = samtools(sam_files)
     bam_files = samtools_out.bam
     
-    // Step 6: Run unicycler for assembly
+    // Step 5: Run unicycler for assembly
     unicycler_out = unicycler(trimmed_fastqs)
     unicycler_assembly = unicycler_out.assembly
+    
+    // Step 6: Run NTM-Profiler on assembly (MOVED AFTER UNICYCLER)
+    ntm_profiler_out = ntm_profiler(unicycler_assembly)
+    ntm_reports = ntm_profiler_out.report
+    ntm_sub_species = ntm_profiler_out.sub_species
+    ntm_vcfs = ntm_profiler_out.vcf
        
     // Step 7: Run HMMER analysis on unicycler assembly files
     hmmer_out = hmmer(unicycler_assembly)
@@ -83,8 +90,6 @@ workflow {
     stats_out = stats(bam_files)
     
     // Step 9: Generate Summary for each sample
-    // FIXED: Use actual output channels to ensure dependencies
-    
     // Transform channels to [prefix, file] format for joining
     unicycler_ch = unicycler_assembly.map { assembly, prefix -> [prefix, assembly] }
     stats_ch = stats_out.coverage.map { coverage_file, prefix -> [prefix, coverage_file] }

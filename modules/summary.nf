@@ -80,12 +80,11 @@ process summary {
         printf "%.4f,%.4f\\n", overall_coverage, overall_depth > "coverage_stats.tmp"
     }'
     
-    # Parse NTM-Profiler sub-species report - use sub-species as main species result
+    # Parse NTM-Profiler sub-species report
     species=\$(awk '
         /^Species report/ { in_species = 1; next }
         /^Resistance report/ { in_species = 0 }
         in_species && NF > 0 && !/^-/ && !/^Species,/ {
-            # First data line after header
             split(\$0, fields, ",")
             if (fields[1] != "" && fields[1] != "Species") {
                 print fields[1]
@@ -132,7 +131,6 @@ process summary {
         }
     ' ${ntm_report})
 
-    # Parse resistance variants from main NTM report
     resistance_variants=\$(awk '
         /^Resistance variants report/ { in_variants = 1; next }
         /^Other variants report/ { in_variants = 0 }
@@ -146,39 +144,35 @@ process summary {
         }
     ' ${ntm_report})
     
-    # Parse Kraken2 report - find highest percentage species (excluding unclassified and root)
-    kraken_species=\$(awk '{
-        # Skip unclassified, root, and very low percentages
+    # Parse Kraken2 report
+    kraken_result=\$(awk '{
+        # Only process lines with species rank (S) and percentage > 0.1
         if (\$1 > 0.1 && \$4 == "S" && \$1 > max_percent) {
             max_percent = \$1
-            max_species = ""
-            # Extract species name from the end of the line
+            # Extract species name from column 6 onwards, handling leading spaces
+            species_name = ""
             for(i=6; i<=NF; i++) {
-                if(i==6) max_species = \$i
-                else max_species = max_species " " \$i
+                if(i==6) species_name = \$i
+                else species_name = species_name " " \$i
             }
-            # Clean up leading/trailing spaces
-            gsub(/^[ \\t]+|[ \\t]+\$/, "", max_species)
+            # Clean up leading/trailing whitespace
+            gsub(/^[ \\t]+|[ \\t]+\$/, "", species_name)
+            max_species = species_name
         }
     } END {
-        if (max_species == "") print "Unknown"
-        else print max_species
-    }' ${kraken_report})
-    
-    kraken_percentage=\$(awk '{
-        if (\$1 > 0.1 && \$4 == "S" && \$1 > max_percent) {
-            max_percent = \$1
+        if (max_species == "") {
+            print "Unknown,0.00"
+        } else {
+            print max_species "," max_percent
         }
-    } END {
-        if (max_percent == "") print "0.00"
-        else print max_percent
     }' ${kraken_report})
+
+    kraken_species=\$(echo "\$kraken_result" | cut -d',' -f1)
+    kraken_percentage=\$(echo "\$kraken_result" | cut -d',' -f2)
     
-    # Parse HMMER BLAST output to check for Erm(41) and get identity percentage
+    # Parse HMMER BLAST output
     erm41_result=\$(awk '{
-        # Check if the subject contains Erm(41) - case insensitive
         if (tolower(\$2) ~ /erm\\(41\\)/) {
-            # Found Erm(41), store the identity percentage (column 3)
             identity = \$3
             found_erm41 = 1
             exit
@@ -192,14 +186,16 @@ process summary {
     erm41_functional=\$(echo \$erm41_result | cut -d',' -f1)
     erm41_identity=\$(echo \$erm41_result | cut -d',' -f2)
     
-    # Handle empty values
-    if [ -z "\$species" ]; then species="Unknown"; fi
-    if [ -z "\$accession" ]; then accession="Unknown"; fi
-    if [ -z "\$ani" ]; then ani="0"; fi
-    if [ -z "\$kraken_species" ]; then kraken_species="Unknown"; fi
-    if [ -z "\$kraken_percentage" ]; then kraken_percentage="0.00"; fi
-    if [ -z "\$erm41_functional" ]; then erm41_functional="No"; fi
-    if [ -z "\$erm41_identity" ]; then erm41_identity="NA"; fi
+    # Set default N/A values for any remaining empty variables
+    if [ -z "\$species" ]; then species="N/A"; fi
+    if [ -z "\$accession" ]; then accession="N/A"; fi
+    if [ -z "\$ani" ]; then ani="N/A"; fi
+    if [ -z "\$kraken_species" ]; then kraken_species="N/A"; fi
+    if [ -z "\$kraken_percentage" ]; then kraken_percentage="N/A"; fi
+    if [ -z "\$resistance_genes" ]; then resistance_genes="N/A"; fi
+    if [ -z "\$resistance_variants" ]; then resistance_variants="N/A"; fi
+    if [ -z "\$erm41_functional" ]; then erm41_functional="N/A"; fi
+    if [ -z "\$erm41_identity" ]; then erm41_identity="N/A"; fi
     
     # Read calculated values using proper bash syntax
     IFS=',' read num_contigs total_length largest_contig smallest_contig avg_length n50 < assembly_stats.tmp
@@ -208,7 +204,7 @@ process summary {
     # Extract reference genome name from params
     ref_name=\$(basename ${params.reference} | sed 's/\\.[^.]*\$//')
     
-    # Create CSV output - using sub-species results in main species columns
+    # Create CSV output
     cat > ${prefix}_sample_summary.csv << EOF
 Sample_ID,Reference_Genome,NTM_Profiler_Species,Accession,ANI,Kraken2_Species,Kraken2_Percentage,Total_Contigs,Total_Length_bp,Largest_Contig_bp,Smallest_Contig_bp,Average_Contig_Length_bp,N50_bp,Overall_Coverage_percent,Overall_Mean_Depth,Resistance_Genes,Resistance_Variants,erm41_functional,erm41_identity_percent
 ${prefix},\$ref_name,\$species,\$accession,\$ani,\$kraken_species,\$kraken_percentage,\$num_contigs,\$total_length,\$largest_contig,\$smallest_contig,\$avg_length,\$n50,\$overall_coverage,\$overall_depth,\$resistance_genes,\$resistance_variants,\$erm41_functional,\$erm41_identity

@@ -8,11 +8,11 @@
 #SBATCH --time=48:00:00
 #SBATCH --output=keywest.%j.out
 #SBATCH --error=keywest.err
-#SBATCH --mail-user=<EMAIL>
+#SBATCH --mail-user=yi.huang@flhealth.gov
 #SBATCH --mail-type=FAIL,END
 
 module load singularity
-module load nextflow
+module load nextflow/24.10.5
 module load bwa-mem2
 module load ncbi_blast
 module load hmmer
