@@ -13,7 +13,7 @@ dependencies:
   - annotated-types=0.7.0=pyhd8ed1ab_1
   - bcftools=1.21=h3a4d415_1
   - bedtools=2.31.1=h13024bc_3
-  - biopython=1.85=py310ha75aee5_1
+  - biopython>=1.83
   - bitarray=3.0.0=py312h66e93f0_0
   - bitstring=4.3.0=pyhd8ed1ab_0
   - boost-cpp=1.78.0=h2c5509c_4
