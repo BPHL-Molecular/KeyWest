@@ -21,8 +21,8 @@ sample2_2.fastq.gz
 
 **For lab samples format as `prefix-date-xxx-xx_S1_L001_R1_001.fastq.gz`:**
 ```bash
-# Use resource/rename.sh to convert lab sample names
-bash resource/rename.sh
+# Use resources/rename.sh to convert lab sample names
+bash resources/rename.sh
 ```
 
 ---
@@ -50,7 +50,7 @@ sample2_1.fastq.gz & sample2_2.fastq.gz
 
 ### Build Conda Environment
 ```bash
-conda env create -f resource/keywest.yml
+conda env create -f resources/keywest.yml
 conda activate keywest
 ```
 
@@ -75,16 +75,16 @@ sbatch keywest.sh
 ```
 output/
 +-- {sample}/
-¦   +-- fastp/              # Quality control reports
-¦   +-- ntm_profiler/       # Species identification
-¦   +-- kraken2/            # Taxonomic classification
-¦   +-- bwa/                # Read alignment
-¦   +-- samtools/           # BAM processing
-¦   +-- unicycler/          # Genome assembly
-¦   +-- hmmer/              # Erm(41) resistance gene analysis
-¦   +-- stats/              # Coverage statistics
-¦   +-- summary/            # Comprehensive CSV report
-¦       +-- {sample}_sample_summary.csv
+Â¦   +-- fastp/              # Quality control reports
+Â¦   +-- ntm_profiler/       # Species identification
+Â¦   +-- kraken2/            # Taxonomic classification
+Â¦   +-- bwa/                # Read alignment
+Â¦   +-- samtools/           # BAM processing
+Â¦   +-- unicycler/          # Genome assembly
+Â¦   +-- hmmer/              # Erm(41) resistance gene analysis
+Â¦   +-- stats/              # Coverage statistics
+Â¦   +-- summary/            # Comprehensive CSV report
+Â¦       +-- {sample}_sample_summary.csv
 +-- multiqc_report.html     # Aggregate quality report
 ```
 
