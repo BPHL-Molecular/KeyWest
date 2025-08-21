@@ -17,8 +17,12 @@ module load bwa-mem2
 module load ncbi_blast
 module load hmmer
 
-APPTAINER_CACHEDIR=./cache_keywest
-export APPTAINER_CACHEDIR
+export APPTAINER_CACHEDIR=./cache_keywest
+export APPTAINER_TMPDIR=./tmp_keywest
+export SINGULARITY_CACHEDIR=./cache_keywest
+export SINGULARITY_TMPDIR=./tmp_keywest
+
+mkdir -p ./cache_keywest ./tmp_keywest
 
 nextflow run keywest.nf -params-file params.yaml
 
