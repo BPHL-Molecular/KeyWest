@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 #SBATCH --account=bphl-umbrella
-#SBATCH --qos=bphl-umbrella-b
+#SBATCH --qos=bphl-umbrella
 #SBATCH --job-name=keywest
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=28
@@ -8,7 +8,7 @@
 #SBATCH --time=48:00:00
 #SBATCH --output=keywest.%j.out
 #SBATCH --error=keywest.err
-#SBATCH --mail-user=yi.huang@flhealth.gov
+#SBATCH --mail-user=<EMAIL>
 #SBATCH --mail-type=FAIL,END
 
 module load singularity
@@ -17,13 +17,10 @@ module load bwa-mem2
 module load ncbi_blast
 module load hmmer
 
-mkdir -p ./cache ./tmp
+mkdir -p ./cache
 
 export APPTAINER_CACHEDIR=./cache
 export NXF_SINGULARITY_CACHEDIR=./cache
-export SINGULARITY_TMPDIR=./tmp
-export APPTAINER_TMPDIR=./tmp
-
 
 nextflow run keywest.nf -params-file params.yaml
 
